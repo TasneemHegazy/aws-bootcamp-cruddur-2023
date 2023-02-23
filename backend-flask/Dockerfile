@@ -11,12 +11,12 @@ COPY . .
 # Second stage: create a production image with a smaller base image
 FROM python:3.10-slim-buster
 
-# Copy the application and dependencies from the previous stage
-COPY --from=build /root/.local /root/.local
-COPY --from=build /app /app
-
 # Set the working directory
 WORKDIR /app
+
+# Copy the application and dependencies from the previous stage
+COPY --from=build --chown=root:root /root/.local /root/.local
+COPY --from=build --chown=root:root /app /app
 
 # Set environment variables
 ENV PATH=/root/.local/bin:$PATH
@@ -25,6 +25,9 @@ ENV PORT=4567
 
 # Expose the port
 EXPOSE $PORT
+
+# Switch to a non-root user
+USER nobody
 
 # Set the entrypoint
 CMD ["./start.sh"]
