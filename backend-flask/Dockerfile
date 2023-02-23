@@ -1,16 +1,30 @@
-FROM python:3.10-slim-buster
+# First stage: build the application and install dependencies
+FROM python:3.10-slim-buster AS build
 
-WORKDIR /backend-flask
+WORKDIR /app
 
 COPY requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip3 install --user --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV FLASK_ENV=development
+# Second stage: create a production image with a smaller base image
+FROM python:3.10-slim-buster
 
-EXPOSE ${PORT}
-#CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0", "--port=4567"]
+# Copy the application and dependencies from the previous stage
+COPY --from=build /root/.local /root/.local
+COPY --from=build /app /app
 
-COPY start.sh start.sh
+# Set the working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PATH=/root/.local/bin:$PATH
+ENV FLASK_ENV=production
+ENV PORT=4567
+
+# Expose the port
+EXPOSE $PORT
+
+# Set the entrypoint
 CMD ["./start.sh"]

@@ -1,10 +1,16 @@
-FROM node:16.18
+# Build stage
+FROM node:16.18 AS build
 
-ENV PORT=3000
-
-COPY . /frontend-react-js
-WORKDIR /frontend-react-js
+WORKDIR /app
+COPY package*.json ./
 RUN npm install
-EXPOSE ${PORT}
-#CMD ["npm", "start"]
+COPY . .
+RUN npm run build
+
+# Runtime stage
+FROM node:16.18-slim
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /app/build /app
+EXPOSE 3000
 CMD ["./start.sh"]
